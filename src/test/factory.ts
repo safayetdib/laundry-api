@@ -20,6 +20,14 @@ import { InMemoryHandoverRepository } from '../modules/handovers/handover.reposi
 import { HandoverService } from '../modules/handovers/handover.service';
 import { ProcessingService } from '../modules/processing/processing.service';
 import { StubEvidenceStorage } from '../modules/evidence/evidence.storage';
+import { InMemoryPaymentRepository } from '../modules/payments/payment.repository';
+import { PaymentService } from '../modules/payments/payment.service';
+import { InMemoryDeliveryTaskRepository } from '../modules/delivery/delivery.repository';
+import { DeliveryService } from '../modules/delivery/delivery.service';
+import { InMemoryQualityCaseRepository } from '../modules/quality/quality.repository';
+import { QualityService } from '../modules/quality/quality.service';
+import { InMemoryManifestRepository } from '../modules/routing/manifest.repository';
+import { ManifestService } from '../modules/routing/manifest.service';
 
 export interface TestAppOptions {
   checkReadiness?: () => boolean;
@@ -70,6 +78,21 @@ export function buildTestApp(options: TestAppOptions = {}) {
   const processingService = new ProcessingService({ assignments, handovers: handoverService });
   const evidenceStorage = new StubEvidenceStorage();
 
+  const paymentsRepo = new InMemoryPaymentRepository();
+  const paymentService = new PaymentService({ payments: paymentsRepo, audit, idempotency });
+  const deliveryTasks = new InMemoryDeliveryTaskRepository();
+  const deliveryService = new DeliveryService({
+    tasks: deliveryTasks,
+    orders,
+    handovers: handoverService,
+    payments: paymentService,
+    audit,
+  });
+  const qualityCases = new InMemoryQualityCaseRepository();
+  const qualityService = new QualityService({ cases: qualityCases, orders, audit });
+  const manifests = new InMemoryManifestRepository();
+  const manifestService = new ManifestService({ manifests, audit });
+
   const app = createApp({
     logger: createLogger('silent'),
     checkReadiness: options.checkReadiness ?? (() => true),
@@ -83,6 +106,10 @@ export function buildTestApp(options: TestAppOptions = {}) {
     processingService,
     handoverService,
     evidenceStorage,
+    deliveryService,
+    paymentService,
+    qualityService,
+    manifestService,
     cookieSecure: false,
     sessionTtlMs,
   });
@@ -97,6 +124,12 @@ export function buildTestApp(options: TestAppOptions = {}) {
     processingService,
     handoverService,
     handovers,
+    paymentService,
+    deliveryService,
+    qualityService,
+    manifestService,
+    paymentsRepo,
+    deliveryTasks,
     users,
     sessions,
     services,

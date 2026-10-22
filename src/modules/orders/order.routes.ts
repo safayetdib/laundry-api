@@ -132,5 +132,21 @@ export function orderRoutes({ orderService, authService }: OrderRoutesConfig): R
     }),
   );
 
+  router.post(
+    '/orders/:id/advance',
+    auth,
+    requireCsrf,
+    validate({
+      params: idParam,
+      body: z.object({ target: z.enum(['in_service', 'ready_for_delivery']) }),
+    }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { id } = req.validated.params as { id: string };
+      const { target } = req.validated.body as { target: 'in_service' | 'ready_for_delivery' };
+      const order = await orderService.advance(id, target, actorOf(req));
+      res.json(successEnvelope(toOrderDTO(order), req.id));
+    }),
+  );
+
   return router;
 }

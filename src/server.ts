@@ -22,6 +22,14 @@ import { MongoHandoverRepository } from './modules/handovers/handover.model';
 import { HandoverService } from './modules/handovers/handover.service';
 import { ProcessingService } from './modules/processing/processing.service';
 import { StubEvidenceStorage } from './modules/evidence/evidence.storage';
+import { MongoPaymentRepository } from './modules/payments/payment.model';
+import { PaymentService } from './modules/payments/payment.service';
+import { MongoDeliveryTaskRepository } from './modules/delivery/delivery.model';
+import { DeliveryService } from './modules/delivery/delivery.service';
+import { MongoQualityCaseRepository } from './modules/quality/quality.model';
+import { QualityService } from './modules/quality/quality.service';
+import { MongoManifestRepository } from './modules/routing/manifest.model';
+import { ManifestService } from './modules/routing/manifest.service';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -53,13 +61,14 @@ async function main(): Promise<void> {
   });
   const orders = new MongoOrderRepository();
   const partners = new MongoPartnerRepository();
+  const idempotency = new MongoIdempotencyRepository();
   const orderService = new OrderService({
     orders,
     zones,
     services,
     pricing: pricingService,
     slots: new SlotService(new MongoSlotRepository()),
-    idempotency: new MongoIdempotencyRepository(),
+    idempotency,
     audit,
   });
   const assignments = new MongoAssignmentRepository();
@@ -73,6 +82,24 @@ async function main(): Promise<void> {
   const handoverService = new HandoverService({ handovers: new MongoHandoverRepository(), audit });
   const processingService = new ProcessingService({ assignments, handovers: handoverService });
   const evidenceStorage = new StubEvidenceStorage();
+  const paymentService = new PaymentService({
+    payments: new MongoPaymentRepository(),
+    audit,
+    idempotency,
+  });
+  const deliveryService = new DeliveryService({
+    tasks: new MongoDeliveryTaskRepository(),
+    orders,
+    handovers: handoverService,
+    payments: paymentService,
+    audit,
+  });
+  const qualityService = new QualityService({
+    cases: new MongoQualityCaseRepository(),
+    orders,
+    audit,
+  });
+  const manifestService = new ManifestService({ manifests: new MongoManifestRepository(), audit });
 
   const app = createApp({
     logger,
@@ -87,6 +114,10 @@ async function main(): Promise<void> {
     processingService,
     handoverService,
     evidenceStorage,
+    deliveryService,
+    paymentService,
+    qualityService,
+    manifestService,
     cookieSecure: env.COOKIE_SECURE_RESOLVED,
     sessionTtlMs,
   });

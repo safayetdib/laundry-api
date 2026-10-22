@@ -26,6 +26,14 @@ import type { ProcessingService } from './modules/processing/processing.service'
 import type { HandoverService } from './modules/handovers/handover.service';
 import { evidenceRoutes } from './modules/evidence/evidence.routes';
 import type { EvidenceStorage } from './modules/evidence/evidence.storage';
+import { deliveryRoutes } from './modules/delivery/delivery.routes';
+import type { DeliveryService } from './modules/delivery/delivery.service';
+import { paymentRoutes } from './modules/payments/payment.routes';
+import type { PaymentService } from './modules/payments/payment.service';
+import { qualityRoutes } from './modules/quality/quality.routes';
+import type { QualityService } from './modules/quality/quality.service';
+import { manifestRoutes } from './modules/routing/manifest.routes';
+import type { ManifestService } from './modules/routing/manifest.service';
 import type { Logger } from './lib/logger';
 
 export interface AppOptions {
@@ -41,6 +49,10 @@ export interface AppOptions {
   processingService: ProcessingService;
   handoverService: HandoverService;
   evidenceStorage: EvidenceStorage;
+  deliveryService: DeliveryService;
+  paymentService: PaymentService;
+  qualityService: QualityService;
+  manifestService: ManifestService;
   cookieSecure: boolean;
   sessionTtlMs: number;
 }
@@ -65,6 +77,10 @@ export function createApp({
   processingService,
   handoverService,
   evidenceStorage,
+  deliveryService,
+  paymentService,
+  qualityService,
+  manifestService,
   cookieSecure,
   sessionTtlMs,
 }: AppOptions): Express {
@@ -94,6 +110,10 @@ export function createApp({
   apiV1.use(assignmentRoutes({ assignmentService, authService }));
   apiV1.use(processingRoutes({ processingService, handoverService, orderService, authService }));
   apiV1.use(evidenceRoutes({ storage: evidenceStorage, authService }));
+  apiV1.use(deliveryRoutes({ deliveryService, authService }));
+  apiV1.use(paymentRoutes({ paymentService, orderService, authService }));
+  apiV1.use(qualityRoutes({ qualityService, orderService, authService }));
+  apiV1.use(manifestRoutes({ manifestService, authService }));
   app.use('/api/v1', apiV1);
 
   app.use(notFoundHandler);

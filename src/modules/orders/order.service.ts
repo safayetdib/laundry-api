@@ -259,5 +259,29 @@ export class OrderService {
     return updated;
   }
 
+  /**
+   * Staff advances an order through the two operational micro-states that are
+   * not driven by delivery tasks (partner receiving / ready for return).
+   * Matrix-validated and audited — not an arbitrary client-facing status PATCH.
+   */
+  async advance(
+    orderId: string,
+    target: 'in_service' | 'ready_for_delivery',
+    actor: OrderActor,
+  ): Promise<Order> {
+    if (!isStaff(actor)) throw new ForbiddenError('Only staff can advance an order.');
+    const order = await this.deps.orders.findById(orderId);
+    if (!order) throw new NotFoundError('Order not found.');
+    assertTransition(order.status, target);
+    const updated = await this.deps.orders.update(order.id, order.version, { status: target });
+    await this.deps.audit.record({
+      actor: actor.id,
+      action: `order.${target}`,
+      resourceType: 'Order',
+      resourceId: order.id,
+    });
+    return updated;
+  }
+
   toDTO = toOrderDTO;
 }
