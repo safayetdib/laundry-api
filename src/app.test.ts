@@ -1,12 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import request from 'supertest';
-import { createApp } from './app';
-import { createLogger } from './lib/logger';
-
-const logger = createLogger('silent');
+import { buildTestApp } from './test/factory';
 
 function appWithReadiness(ready: boolean) {
-  return createApp({ logger, checkReadiness: () => ready });
+  return buildTestApp({ checkReadiness: () => ready }).app;
 }
 
 describe('createApp', () => {

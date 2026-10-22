@@ -1,5 +1,6 @@
 import { Router, type Request, type Response } from 'express';
 import { successEnvelope, errorEnvelope } from '../../lib/http';
+import { asyncHandler } from '../../lib/async-handler';
 
 export type ReadinessCheck = () => boolean | Promise<boolean>;
 
@@ -16,14 +17,19 @@ export function healthRoutes(checkReadiness: ReadinessCheck): Router {
     );
   });
 
-  router.get('/ready', async (req: Request, res: Response) => {
-    const ready = await checkReadiness();
-    if (ready) {
-      res.json(successEnvelope({ status: 'ready' }, req.id));
-      return;
-    }
-    res.status(503).json(errorEnvelope('NOT_READY', 'Service dependencies are not ready.', req.id));
-  });
+  router.get(
+    '/ready',
+    asyncHandler(async (req: Request, res: Response) => {
+      const ready = await checkReadiness();
+      if (ready) {
+        res.json(successEnvelope({ status: 'ready' }, req.id));
+        return;
+      }
+      res
+        .status(503)
+        .json(errorEnvelope('NOT_READY', 'Service dependencies are not ready.', req.id));
+    }),
+  );
 
   return router;
 }

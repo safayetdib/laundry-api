@@ -2,6 +2,9 @@ import { createApp } from './app';
 import { loadEnv } from './config/env';
 import { createLogger } from './lib/logger';
 import { connectDb, disconnectDb, dbReadiness } from './lib/db';
+import { MongoUserRepository } from './modules/users/user.model';
+import { MongoSessionRepository } from './modules/auth/session.model';
+import { AuthService } from './modules/auth/auth.service';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -17,7 +20,20 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const app = createApp({ logger, checkReadiness: dbReadiness });
+  const sessionTtlMs = env.SESSION_TTL_HOURS * 60 * 60 * 1000;
+  const authService = new AuthService({
+    users: new MongoUserRepository(),
+    sessions: new MongoSessionRepository(),
+    sessionTtlMs,
+  });
+
+  const app = createApp({
+    logger,
+    checkReadiness: dbReadiness,
+    authService,
+    cookieSecure: env.COOKIE_SECURE_RESOLVED,
+    sessionTtlMs,
+  });
   const server = app.listen(env.PORT, () => {
     logger.info({ port: env.PORT }, 'laundry-api listening');
   });

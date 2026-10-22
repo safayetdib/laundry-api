@@ -7,12 +7,16 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().max(65535).default(3000),
   MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
   LOG_LEVEL: z.enum(LOG_LEVELS).optional(),
+  SESSION_TTL_HOURS: z.coerce.number().int().positive().default(168),
+  COOKIE_SECURE: z.enum(['true', 'false']).optional(),
 });
 
 type RawEnv = z.infer<typeof envSchema>;
 
 export interface Env extends RawEnv {
   LOG_LEVEL: (typeof LOG_LEVELS)[number];
+  /** Whether session cookies set the Secure flag (true in production). */
+  COOKIE_SECURE_RESOLVED: boolean;
 }
 
 function defaultLogLevel(nodeEnv: RawEnv['NODE_ENV']): Env['LOG_LEVEL'] {
@@ -34,8 +38,13 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
     throw new Error(`Invalid environment configuration:\n${issues}`);
   }
 
+  const data = parsed.data;
   return {
-    ...parsed.data,
-    LOG_LEVEL: parsed.data.LOG_LEVEL ?? defaultLogLevel(parsed.data.NODE_ENV),
+    ...data,
+    LOG_LEVEL: data.LOG_LEVEL ?? defaultLogLevel(data.NODE_ENV),
+    COOKIE_SECURE_RESOLVED:
+      data.COOKIE_SECURE !== undefined
+        ? data.COOKIE_SECURE === 'true'
+        : data.NODE_ENV === 'production',
   };
 }
