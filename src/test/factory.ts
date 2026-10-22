@@ -16,6 +16,10 @@ import { OrderService } from '../modules/orders/order.service';
 import { InMemoryPartnerRepository } from '../modules/partners/partner.repository';
 import { InMemoryAssignmentRepository } from '../modules/assignments/assignment.repository';
 import { AssignmentService } from '../modules/assignments/assignment.service';
+import { InMemoryHandoverRepository } from '../modules/handovers/handover.repository';
+import { HandoverService } from '../modules/handovers/handover.service';
+import { ProcessingService } from '../modules/processing/processing.service';
+import { StubEvidenceStorage } from '../modules/evidence/evidence.storage';
 
 export interface TestAppOptions {
   checkReadiness?: () => boolean;
@@ -61,6 +65,10 @@ export function buildTestApp(options: TestAppOptions = {}) {
     pricing: pricingService,
     audit,
   });
+  const handovers = new InMemoryHandoverRepository();
+  const handoverService = new HandoverService({ handovers, audit });
+  const processingService = new ProcessingService({ assignments, handovers: handoverService });
+  const evidenceStorage = new StubEvidenceStorage();
 
   const app = createApp({
     logger: createLogger('silent'),
@@ -72,6 +80,9 @@ export function buildTestApp(options: TestAppOptions = {}) {
     orderService,
     partners,
     assignmentService,
+    processingService,
+    handoverService,
+    evidenceStorage,
     cookieSecure: false,
     sessionTtlMs,
   });
@@ -83,6 +94,9 @@ export function buildTestApp(options: TestAppOptions = {}) {
     orderService,
     slotService,
     assignmentService,
+    processingService,
+    handoverService,
+    handovers,
     users,
     sessions,
     services,

@@ -1,7 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import { ConflictError } from '../../lib/errors';
 import type { AssignmentStatus } from './assignment.status';
-import type { AssignmentItem, AssignmentPayable, PartnerAssignment } from './assignment.types';
+import type {
+  AssignmentIntake,
+  AssignmentItem,
+  AssignmentPayable,
+  PartnerAssignment,
+} from './assignment.types';
 
 export interface CreateAssignmentData {
   orderId: string;
@@ -16,6 +21,7 @@ export interface AssignmentChanges {
   acceptedAt?: Date;
   receivedAt?: Date;
   completedAt?: Date;
+  intake?: AssignmentIntake;
 }
 
 export interface AssignmentRepository {
@@ -80,6 +86,7 @@ export class InMemoryAssignmentRepository implements AssignmentRepository {
       ...(changes.acceptedAt ? { acceptedAt: changes.acceptedAt } : {}),
       ...(changes.receivedAt ? { receivedAt: changes.receivedAt } : {}),
       ...(changes.completedAt ? { completedAt: changes.completedAt } : {}),
+      ...(changes.intake ? { intake: changes.intake } : {}),
       version: a.version + 1,
       updatedAt: new Date(),
     };

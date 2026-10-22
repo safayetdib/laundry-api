@@ -18,6 +18,10 @@ import { OrderService } from './modules/orders/order.service';
 import { MongoPartnerRepository } from './modules/partners/partner.model';
 import { MongoAssignmentRepository } from './modules/assignments/assignment.model';
 import { AssignmentService } from './modules/assignments/assignment.service';
+import { MongoHandoverRepository } from './modules/handovers/handover.model';
+import { HandoverService } from './modules/handovers/handover.service';
+import { ProcessingService } from './modules/processing/processing.service';
+import { StubEvidenceStorage } from './modules/evidence/evidence.storage';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -58,13 +62,17 @@ async function main(): Promise<void> {
     idempotency: new MongoIdempotencyRepository(),
     audit,
   });
+  const assignments = new MongoAssignmentRepository();
   const assignmentService = new AssignmentService({
-    assignments: new MongoAssignmentRepository(),
+    assignments,
     orders,
     partners,
     pricing: pricingService,
     audit,
   });
+  const handoverService = new HandoverService({ handovers: new MongoHandoverRepository(), audit });
+  const processingService = new ProcessingService({ assignments, handovers: handoverService });
+  const evidenceStorage = new StubEvidenceStorage();
 
   const app = createApp({
     logger,
@@ -76,6 +84,9 @@ async function main(): Promise<void> {
     orderService,
     partners,
     assignmentService,
+    processingService,
+    handoverService,
+    evidenceStorage,
     cookieSecure: env.COOKIE_SECURE_RESOLVED,
     sessionTtlMs,
   });

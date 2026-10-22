@@ -27,6 +27,7 @@ const assignmentSchema = new Schema<AssignmentDoc>(
     status: { type: String, enum: ASSIGNMENT_STATUSES, required: true, index: true },
     items: { type: [itemSchema], required: true },
     payable: { type: Schema.Types.Mixed, default: null },
+    intake: { type: Schema.Types.Mixed },
     version: { type: Number, required: true, default: 1 },
     createdAt: { type: Date, required: true },
     updatedAt: { type: Date, required: true },
@@ -82,6 +83,7 @@ export class MongoAssignmentRepository implements AssignmentRepository {
     if (changes.acceptedAt) set.acceptedAt = changes.acceptedAt;
     if (changes.receivedAt) set.receivedAt = changes.receivedAt;
     if (changes.completedAt) set.completedAt = changes.completedAt;
+    if (changes.intake) set.intake = changes.intake;
 
     const doc = await AssignmentModel.findOneAndUpdate(
       { _id: id, version: expectedVersion },

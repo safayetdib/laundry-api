@@ -21,6 +21,11 @@ import { partnerRoutes } from './modules/partners/partner.routes';
 import type { PartnerRepository } from './modules/partners/partner.repository';
 import { assignmentRoutes } from './modules/assignments/assignment.routes';
 import type { AssignmentService } from './modules/assignments/assignment.service';
+import { processingRoutes } from './modules/processing/processing.routes';
+import type { ProcessingService } from './modules/processing/processing.service';
+import type { HandoverService } from './modules/handovers/handover.service';
+import { evidenceRoutes } from './modules/evidence/evidence.routes';
+import type { EvidenceStorage } from './modules/evidence/evidence.storage';
 import type { Logger } from './lib/logger';
 
 export interface AppOptions {
@@ -33,6 +38,9 @@ export interface AppOptions {
   orderService: OrderService;
   partners: PartnerRepository;
   assignmentService: AssignmentService;
+  processingService: ProcessingService;
+  handoverService: HandoverService;
+  evidenceStorage: EvidenceStorage;
   cookieSecure: boolean;
   sessionTtlMs: number;
 }
@@ -54,6 +62,9 @@ export function createApp({
   orderService,
   partners,
   assignmentService,
+  processingService,
+  handoverService,
+  evidenceStorage,
   cookieSecure,
   sessionTtlMs,
 }: AppOptions): Express {
@@ -81,6 +92,8 @@ export function createApp({
   apiV1.use(orderRoutes({ orderService, authService }));
   apiV1.use(partnerRoutes({ partners, authService }));
   apiV1.use(assignmentRoutes({ assignmentService, authService }));
+  apiV1.use(processingRoutes({ processingService, handoverService, orderService, authService }));
+  apiV1.use(evidenceRoutes({ storage: evidenceStorage, authService }));
   app.use('/api/v1', apiV1);
 
   app.use(notFoundHandler);
