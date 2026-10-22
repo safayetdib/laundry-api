@@ -24,6 +24,7 @@ export interface OrderRepository {
   findById(id: string): Promise<Order | null>;
   findByCode(orderCode: string): Promise<Order | null>;
   listByCustomer(customerId: string): Promise<Order[]>;
+  listRecent(limit: number): Promise<Order[]>;
   /** Optimistic-concurrency update: fails if the stored version != expected. */
   update(id: string, expectedVersion: number, changes: OrderChanges): Promise<Order>;
 }
@@ -54,6 +55,13 @@ export class InMemoryOrderRepository implements OrderRepository {
     return [...this.byId.values()]
       .filter((order) => order.customerId === customerId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .map((order) => structuredClone(order));
+  }
+
+  async listRecent(limit: number): Promise<Order[]> {
+    return [...this.byId.values()]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit)
       .map((order) => structuredClone(order));
   }
 

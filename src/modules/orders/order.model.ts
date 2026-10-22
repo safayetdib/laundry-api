@@ -86,6 +86,11 @@ export class MongoOrderRepository implements OrderRepository {
     return docs.map(toOrder);
   }
 
+  async listRecent(limit: number): Promise<Order[]> {
+    const docs = await OrderModel.find().sort({ createdAt: -1 }).limit(limit);
+    return docs.map(toOrder);
+  }
+
   async update(id: string, expectedVersion: number, changes: OrderChanges): Promise<Order> {
     const set: Record<string, unknown> = { updatedAt: new Date() };
     if (changes.status) set.status = changes.status;

@@ -85,6 +85,19 @@ export function orderRoutes({ orderService, authService }: OrderRoutesConfig): R
   );
 
   router.get(
+    '/admin/orders',
+    auth,
+    validate({
+      query: z.object({ limit: z.coerce.number().int().positive().max(200).optional() }),
+    }),
+    asyncHandler(async (req: Request, res: Response) => {
+      const { limit } = req.validated.query as { limit?: number };
+      const orders = await orderService.listRecent(actorOf(req), limit ?? 50);
+      res.json(successEnvelope(orders.map(toOrderDTO), req.id));
+    }),
+  );
+
+  router.get(
     '/orders/:orderCode',
     auth,
     validate({ params: z.object({ orderCode: z.string().min(1) }) }),

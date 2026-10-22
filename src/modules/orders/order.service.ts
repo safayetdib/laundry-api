@@ -191,6 +191,12 @@ export class OrderService {
     return this.deps.orders.listByCustomer(customerId);
   }
 
+  /** Staff order queue (most recent first). */
+  async listRecent(actor: OrderActor, limit = 50): Promise<Order[]> {
+    if (!isStaff(actor)) throw new ForbiddenError('Only staff can list all orders.');
+    return this.deps.orders.listRecent(Math.min(Math.max(limit, 1), 200));
+  }
+
   async approveQuote(orderId: string, quoteVersion: number, actor: OrderActor): Promise<Order> {
     const order = await this.deps.orders.findById(orderId);
     if (!order) throw new NotFoundError('Order not found.');

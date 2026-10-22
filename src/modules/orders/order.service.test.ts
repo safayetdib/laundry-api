@@ -128,4 +128,13 @@ describe('OrderService', () => {
       statusCode: 404,
     });
   });
+
+  it('lists all orders for staff but forbids customers', async () => {
+    const { ctx, zone } = await setup();
+    await ctx.orderService.createOrder(orderInput(zone.id), customer1);
+    const staff = { id: 'ops-1', roles: ['operations'] as const };
+    const all = await ctx.orderService.listRecent({ id: staff.id, roles: [...staff.roles] });
+    expect(all.length).toBeGreaterThanOrEqual(1);
+    await expect(ctx.orderService.listRecent(customer1)).rejects.toMatchObject({ statusCode: 403 });
+  });
 });
