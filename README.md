@@ -47,6 +47,8 @@ initial software platform.
     and items that need explicit confirmation
 -   `docs/08-LOOPHOLE-REVIEW.md` --- design-review risk register (P0/P1/P2
     safeguards) to check before implementing each milestone
+-   `docs/09-PILOT-READINESS.md` --- deployment runbook, env vars, backup/
+    recovery, monitoring and the go-live checklist
 
 ## Development (laundry-api)
 
