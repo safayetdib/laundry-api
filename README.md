@@ -61,6 +61,25 @@ cp .env.example .env    # local configuration (never commit .env)
 pnpm dev                # start the dev server with reload (default PORT=3000)
 ```
 
+### Run the whole thing locally
+
+1. Start MongoDB (Docker): `docker compose up -d mongo` — or use a local
+   `mongod` / a MongoDB Atlas connection string.
+2. Configure and start the API:
+   ```bash
+   cp .env.example .env         # set MONGODB_URI, PORT=4000, SEED_ADMIN_*
+   pnpm install
+   pnpm seed                    # create admin + base data (idempotent)
+   pnpm dev                     # API on http://localhost:4000
+   ```
+3. Start the web app (in the `laundry-web` repo) on port 3000 with
+   `NEXT_PUBLIC_API_BASE=http://localhost:4000/api/v1`, then open
+   http://localhost:3000 and log in with the seeded admin.
+
+Run the API on a different port from the web dev server (which defaults to
+3000). `CORS_ORIGINS` defaults to `http://localhost:3000` outside production,
+so the browser app can call the API with credentials.
+
 ### Seeding
 
 `pnpm seed` bootstraps a usable system against the configured `MONGODB_URI`:

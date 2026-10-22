@@ -1,6 +1,7 @@
 import express, { type Express, Router } from 'express';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import { requestId } from './middleware/request-id';
 import { requestLogger } from './middleware/request-logger';
 import { notFoundHandler } from './middleware/not-found';
@@ -57,6 +58,8 @@ export interface AppOptions {
   manifestService: ManifestService;
   cookieSecure: boolean;
   sessionTtlMs: number;
+  /** Exact browser origins allowed to call the API with credentials. */
+  corsOrigins: string[];
 }
 
 /**
@@ -86,6 +89,7 @@ export function createApp({
   manifestService,
   cookieSecure,
   sessionTtlMs,
+  corsOrigins,
 }: AppOptions): Express {
   const app = express();
   app.disable('x-powered-by');
@@ -93,6 +97,18 @@ export function createApp({
   app.set('trust proxy', 1);
 
   app.use(helmet());
+  // Exact-origin CORS with credentials (never wildcard + credentials, per
+  // docs/04-SECURITY.md). Requests with no Origin (curl, same-origin, server
+  // to server) are allowed through.
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        if (!origin || corsOrigins.includes(origin)) callback(null, true);
+        else callback(null, false);
+      },
+      credentials: true,
+    }),
+  );
   app.use(requestId);
   app.use(requestLogger(logger));
   app.use(express.json());

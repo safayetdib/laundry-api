@@ -9,6 +9,8 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(LOG_LEVELS).optional(),
   SESSION_TTL_HOURS: z.coerce.number().int().positive().default(168),
   COOKIE_SECURE: z.enum(['true', 'false']).optional(),
+  // Comma-separated list of exact browser origins allowed to call the API.
+  CORS_ORIGINS: z.string().optional(),
   // Optional S3-compatible object storage for evidence photos. When unset,
   // a stub is used and uploads are disabled.
   S3_BUCKET: z.string().min(1).optional(),
@@ -25,6 +27,8 @@ export interface Env extends RawEnv {
   LOG_LEVEL: (typeof LOG_LEVELS)[number];
   /** Whether session cookies set the Secure flag (true in production). */
   COOKIE_SECURE_RESOLVED: boolean;
+  /** Parsed list of allowed browser origins. */
+  CORS_ORIGINS_RESOLVED: string[];
 }
 
 function defaultLogLevel(nodeEnv: RawEnv['NODE_ENV']): Env['LOG_LEVEL'] {
@@ -47,6 +51,14 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   }
 
   const data = parsed.data;
+  const corsOrigins = data.CORS_ORIGINS
+    ? data.CORS_ORIGINS.split(',')
+        .map((o) => o.trim())
+        .filter(Boolean)
+    : data.NODE_ENV === 'production'
+      ? []
+      : ['http://localhost:3000'];
+
   return {
     ...data,
     LOG_LEVEL: data.LOG_LEVEL ?? defaultLogLevel(data.NODE_ENV),
@@ -54,5 +66,6 @@ export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
       data.COOKIE_SECURE !== undefined
         ? data.COOKIE_SECURE === 'true'
         : data.NODE_ENV === 'production',
+    CORS_ORIGINS_RESOLVED: corsOrigins,
   };
 }

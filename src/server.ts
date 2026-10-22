@@ -131,6 +131,7 @@ async function main(): Promise<void> {
     manifestService,
     cookieSecure: env.COOKIE_SECURE_RESOLVED,
     sessionTtlMs,
+    corsOrigins: env.CORS_ORIGINS_RESOLVED,
   });
   const server = app.listen(env.PORT, () => {
     logger.info({ port: env.PORT }, 'laundry-api listening');

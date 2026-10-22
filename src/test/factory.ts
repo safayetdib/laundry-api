@@ -118,6 +118,7 @@ export function buildTestApp(options: TestAppOptions = {}) {
     manifestService,
     cookieSecure: false,
     sessionTtlMs,
+    corsOrigins: ['http://localhost:3000'],
   });
 
   return {

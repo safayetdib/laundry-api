@@ -52,4 +52,21 @@ describe('createApp', () => {
 
     expect(res.body.meta.requestId).toBe('trace-123');
   });
+
+  it('allows an approved CORS origin with credentials', async () => {
+    const res = await request(appWithReadiness(true))
+      .get('/health')
+      .set('Origin', 'http://localhost:3000');
+
+    expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+    expect(res.headers['access-control-allow-credentials']).toBe('true');
+  });
+
+  it('does not grant CORS to an unapproved origin', async () => {
+    const res = await request(appWithReadiness(true))
+      .get('/health')
+      .set('Origin', 'http://evil.example');
+
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
+  });
 });

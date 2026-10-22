@@ -1,0 +1,14 @@
+# Local development dependencies. Start MongoDB with:
+#   docker compose up -d mongo
+# Then set MONGODB_URI=mongodb://127.0.0.1:27017/folded_dev in your .env.
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
