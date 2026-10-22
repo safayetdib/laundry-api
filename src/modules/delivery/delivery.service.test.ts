@@ -120,4 +120,13 @@ describe('DeliveryService lifecycle', () => {
       ),
     ).rejects.toMatchObject({ statusCode: 403 });
   });
+
+  it('exposes the order line items on a rider task view', async () => {
+    const { ctx, order, orderItemId } = await setupConfirmedOrder();
+    await ctx.deliveryService.createPickupTask(order.id, ops, rider.id);
+    const views = await ctx.deliveryService.listForRiderDetailed(rider.id);
+    expect(views).toHaveLength(1);
+    expect(views[0]!.orderCode).toBe(order.orderCode);
+    expect(views[0]!.items.map((i) => i.orderItemId)).toContain(orderItemId);
+  });
 });

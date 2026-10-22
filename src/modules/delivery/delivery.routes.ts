@@ -84,8 +84,15 @@ export function deliveryRoutes({ deliveryService, authService }: DeliveryRoutesC
     auth,
     requireRoles('rider'),
     asyncHandler(async (req: Request, res: Response) => {
-      const tasks = await deliveryService.listForRider(req.user!.id);
-      res.json(successEnvelope(tasks.map(toDeliveryTaskDTO), req.id));
+      const views = await deliveryService.listForRiderDetailed(req.user!.id);
+      const data = views.map((v) => ({
+        ...toDeliveryTaskDTO(v.task),
+        orderCode: v.orderCode,
+        zoneId: v.zoneId,
+        address: v.address,
+        items: v.items,
+      }));
+      res.json(successEnvelope(data, req.id));
     }),
   );
 

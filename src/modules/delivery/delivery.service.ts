@@ -4,6 +4,7 @@ import type { HandoverService } from '../handovers/handover.service';
 import type { HandoverCount } from '../handovers/handover.types';
 import type { OrderRepository } from '../orders/order.repository';
 import { assertTransition } from '../orders/order.status';
+import type { AddressSnapshot } from '../orders/order.types';
 import type { PaymentService } from '../payments/payment.service';
 import type { Role } from '../users/user.types';
 import type { DeliveryTaskRepository } from './delivery.repository';
@@ -12,6 +13,15 @@ import type { DeliveryTask } from './delivery.types';
 export interface DeliveryActor {
   id: string;
   roles: Role[];
+}
+
+/** A rider's task enriched with the order context needed to act on it. */
+export interface RiderTaskView {
+  task: DeliveryTask;
+  orderCode: string;
+  zoneId: string;
+  address: AddressSnapshot;
+  items: { orderItemId: string; serviceCode: string; displayName: string; quantity: number }[];
 }
 
 export interface DeliveryServiceDeps {
@@ -50,6 +60,29 @@ export class DeliveryService {
 
   async listForRider(riderId: string): Promise<DeliveryTask[]> {
     return this.deps.tasks.listByRider(riderId);
+  }
+
+  /** Rider tasks enriched with order code, address and line items for counts. */
+  async listForRiderDetailed(riderId: string): Promise<RiderTaskView[]> {
+    const tasks = await this.deps.tasks.listByRider(riderId);
+    const views: RiderTaskView[] = [];
+    for (const task of tasks) {
+      const order = await this.deps.orders.findById(task.orderId);
+      if (!order) continue;
+      views.push({
+        task,
+        orderCode: order.orderCode,
+        zoneId: order.zoneId,
+        address: order.addressSnapshot,
+        items: order.quote.lines.map((l) => ({
+          orderItemId: l.orderItemId,
+          serviceCode: l.serviceCode,
+          displayName: l.displayName,
+          quantity: l.quantity,
+        })),
+      });
+    }
+    return views;
   }
 
   async createPickupTask(
