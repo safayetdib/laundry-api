@@ -23,6 +23,7 @@ export interface ServiceZone {
 }
 
 export interface ZoneDTO {
+  id: string;
   code: string;
   name: string;
   city: string;
@@ -30,5 +31,11 @@ export interface ZoneDTO {
 }
 
 export function toZoneDTO(zone: ServiceZone): ZoneDTO {
-  return { code: zone.code, name: zone.name, city: zone.city, localities: zone.localities };
+  return {
+    id: zone.id,
+    code: zone.code,
+    name: zone.name,
+    city: zone.city,
+    localities: zone.localities,
+  };
 }
