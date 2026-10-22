@@ -15,6 +15,9 @@ import { MongoSlotRepository } from './modules/scheduling/slot.model';
 import { SlotService } from './modules/scheduling/slot.service';
 import { MongoIdempotencyRepository } from './modules/idempotency/idempotency.model';
 import { OrderService } from './modules/orders/order.service';
+import { MongoPartnerRepository } from './modules/partners/partner.model';
+import { MongoAssignmentRepository } from './modules/assignments/assignment.model';
+import { AssignmentService } from './modules/assignments/assignment.service';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -44,13 +47,22 @@ async function main(): Promise<void> {
     services,
     audit,
   });
+  const orders = new MongoOrderRepository();
+  const partners = new MongoPartnerRepository();
   const orderService = new OrderService({
-    orders: new MongoOrderRepository(),
+    orders,
     zones,
     services,
     pricing: pricingService,
     slots: new SlotService(new MongoSlotRepository()),
     idempotency: new MongoIdempotencyRepository(),
+    audit,
+  });
+  const assignmentService = new AssignmentService({
+    assignments: new MongoAssignmentRepository(),
+    orders,
+    partners,
+    pricing: pricingService,
     audit,
   });
 
@@ -62,6 +74,8 @@ async function main(): Promise<void> {
     zones,
     pricingService,
     orderService,
+    partners,
+    assignmentService,
     cookieSecure: env.COOKIE_SECURE_RESOLVED,
     sessionTtlMs,
   });

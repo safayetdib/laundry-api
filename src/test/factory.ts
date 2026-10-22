@@ -13,6 +13,9 @@ import { InMemorySlotRepository } from '../modules/scheduling/slot.repository';
 import { SlotService } from '../modules/scheduling/slot.service';
 import { InMemoryIdempotencyRepository } from '../modules/idempotency/idempotency.repository';
 import { OrderService } from '../modules/orders/order.service';
+import { InMemoryPartnerRepository } from '../modules/partners/partner.repository';
+import { InMemoryAssignmentRepository } from '../modules/assignments/assignment.repository';
+import { AssignmentService } from '../modules/assignments/assignment.service';
 
 export interface TestAppOptions {
   checkReadiness?: () => boolean;
@@ -35,6 +38,8 @@ export function buildTestApp(options: TestAppOptions = {}) {
   const orders = new InMemoryOrderRepository();
   const slotRepo = new InMemorySlotRepository();
   const idempotency = new InMemoryIdempotencyRepository();
+  const partners = new InMemoryPartnerRepository();
+  const assignments = new InMemoryAssignmentRepository();
 
   const sessionTtlMs = options.sessionTtlMs ?? 60 * 60 * 1000;
   const authService = new AuthService({ users, sessions, sessionTtlMs });
@@ -49,6 +54,13 @@ export function buildTestApp(options: TestAppOptions = {}) {
     idempotency,
     audit,
   });
+  const assignmentService = new AssignmentService({
+    assignments,
+    orders,
+    partners,
+    pricing: pricingService,
+    audit,
+  });
 
   const app = createApp({
     logger: createLogger('silent'),
@@ -58,6 +70,8 @@ export function buildTestApp(options: TestAppOptions = {}) {
     zones,
     pricingService,
     orderService,
+    partners,
+    assignmentService,
     cookieSecure: false,
     sessionTtlMs,
   });
@@ -68,6 +82,7 @@ export function buildTestApp(options: TestAppOptions = {}) {
     pricingService,
     orderService,
     slotService,
+    assignmentService,
     users,
     sessions,
     services,
@@ -75,6 +90,8 @@ export function buildTestApp(options: TestAppOptions = {}) {
     priceLists,
     orders,
     slotRepo,
+    partners,
+    assignments,
     audit,
   };
 }

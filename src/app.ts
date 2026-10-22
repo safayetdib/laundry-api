@@ -17,6 +17,10 @@ import { pricingRoutes } from './modules/pricing/pricing.routes';
 import type { PricingService } from './modules/pricing/pricing.service';
 import { orderRoutes } from './modules/orders/order.routes';
 import type { OrderService } from './modules/orders/order.service';
+import { partnerRoutes } from './modules/partners/partner.routes';
+import type { PartnerRepository } from './modules/partners/partner.repository';
+import { assignmentRoutes } from './modules/assignments/assignment.routes';
+import type { AssignmentService } from './modules/assignments/assignment.service';
 import type { Logger } from './lib/logger';
 
 export interface AppOptions {
@@ -27,6 +31,8 @@ export interface AppOptions {
   zones: ZoneRepository;
   pricingService: PricingService;
   orderService: OrderService;
+  partners: PartnerRepository;
+  assignmentService: AssignmentService;
   cookieSecure: boolean;
   sessionTtlMs: number;
 }
@@ -46,6 +52,8 @@ export function createApp({
   zones,
   pricingService,
   orderService,
+  partners,
+  assignmentService,
   cookieSecure,
   sessionTtlMs,
 }: AppOptions): Express {
@@ -71,6 +79,8 @@ export function createApp({
   apiV1.use(zoneRoutes(zones));
   apiV1.use(pricingRoutes({ pricingService, services, authService }));
   apiV1.use(orderRoutes({ orderService, authService }));
+  apiV1.use(partnerRoutes({ partners, authService }));
+  apiV1.use(assignmentRoutes({ assignmentService, authService }));
   app.use('/api/v1', apiV1);
 
   app.use(notFoundHandler);
