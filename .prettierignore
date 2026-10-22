@@ -1,0 +1,7 @@
+dist/
+coverage/
+node_modules/
+pnpm-lock.yaml
+
+# Markdown docs are hand-maintained (see docs/); Prettier does not rewrap them.
+**/*.md

@@ -48,6 +48,31 @@ initial software platform.
 -   `docs/08-LOOPHOLE-REVIEW.md` --- design-review risk register (P0/P1/P2
     safeguards) to check before implementing each milestone
 
+## Development (laundry-api)
+
+Prerequisites: Node.js 20 LTS (see `.nvmrc`) and pnpm (via Corepack:
+`corepack enable`).
+
+```bash
+pnpm install            # install dependencies
+cp .env.example .env    # local configuration (never commit .env)
+pnpm dev                # start the dev server with reload (default PORT=3000)
+```
+
+Checks (all run in CI on every push/PR):
+
+```bash
+pnpm lint               # ESLint
+pnpm format:check       # Prettier (code only; markdown docs are hand-maintained)
+pnpm typecheck          # tsc --noEmit
+pnpm test               # Vitest
+pnpm build              # compile to dist/
+```
+
+Milestone 0 provides only project scaffolding and a placeholder `/health`
+route. Product modules are added milestone by milestone per
+`docs/05-ROADMAP.md`.
+
 ## Important
 
 This is a development specification, not legal advice or a final
