@@ -5,6 +5,11 @@ import { connectDb, disconnectDb, dbReadiness } from './lib/db';
 import { MongoUserRepository } from './modules/users/user.model';
 import { MongoSessionRepository } from './modules/auth/session.model';
 import { AuthService } from './modules/auth/auth.service';
+import { MongoServiceRepository } from './modules/catalogue/service.model';
+import { MongoZoneRepository } from './modules/zones/zone.model';
+import { MongoPriceListRepository } from './modules/pricing/pricelist.model';
+import { MongoAuditRepository } from './modules/audit/audit.model';
+import { PricingService } from './modules/pricing/pricing.service';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -21,16 +26,25 @@ async function main(): Promise<void> {
   }
 
   const sessionTtlMs = env.SESSION_TTL_HOURS * 60 * 60 * 1000;
+  const services = new MongoServiceRepository();
   const authService = new AuthService({
     users: new MongoUserRepository(),
     sessions: new MongoSessionRepository(),
     sessionTtlMs,
+  });
+  const pricingService = new PricingService({
+    priceLists: new MongoPriceListRepository(),
+    services,
+    audit: new MongoAuditRepository(),
   });
 
   const app = createApp({
     logger,
     checkReadiness: dbReadiness,
     authService,
+    services,
+    zones: new MongoZoneRepository(),
+    pricingService,
     cookieSecure: env.COOKIE_SECURE_RESOLVED,
     sessionTtlMs,
   });

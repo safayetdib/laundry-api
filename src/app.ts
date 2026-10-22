@@ -9,12 +9,21 @@ import { healthRoutes, type ReadinessCheck } from './modules/health/health.route
 import { openapiRoutes } from './openapi/openapi.routes';
 import { authRoutes } from './modules/auth/auth.routes';
 import type { AuthService } from './modules/auth/auth.service';
+import { serviceRoutes } from './modules/catalogue/service.routes';
+import type { ServiceRepository } from './modules/catalogue/service.repository';
+import { zoneRoutes } from './modules/zones/zone.routes';
+import type { ZoneRepository } from './modules/zones/zone.repository';
+import { pricingRoutes } from './modules/pricing/pricing.routes';
+import type { PricingService } from './modules/pricing/pricing.service';
 import type { Logger } from './lib/logger';
 
 export interface AppOptions {
   logger: Logger;
   checkReadiness: ReadinessCheck;
   authService: AuthService;
+  services: ServiceRepository;
+  zones: ZoneRepository;
+  pricingService: PricingService;
   cookieSecure: boolean;
   sessionTtlMs: number;
 }
@@ -30,6 +39,9 @@ export function createApp({
   logger,
   checkReadiness,
   authService,
+  services,
+  zones,
+  pricingService,
   cookieSecure,
   sessionTtlMs,
 }: AppOptions): Express {
@@ -51,6 +63,9 @@ export function createApp({
   const apiV1 = Router();
   apiV1.use(openapiRoutes());
   apiV1.use('/auth', authRoutes({ authService, cookieSecure, sessionTtlMs }));
+  apiV1.use(serviceRoutes(services));
+  apiV1.use(zoneRoutes(zones));
+  apiV1.use(pricingRoutes({ pricingService, services, authService }));
   app.use('/api/v1', apiV1);
 
   app.use(notFoundHandler);
