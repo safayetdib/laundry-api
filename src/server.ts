@@ -21,7 +21,7 @@ import { AssignmentService } from './modules/assignments/assignment.service';
 import { MongoHandoverRepository } from './modules/handovers/handover.model';
 import { HandoverService } from './modules/handovers/handover.service';
 import { ProcessingService } from './modules/processing/processing.service';
-import { StubEvidenceStorage } from './modules/evidence/evidence.storage';
+import { createEvidenceStorage } from './modules/evidence/evidence.storage';
 import { MongoPaymentRepository } from './modules/payments/payment.model';
 import { PaymentService } from './modules/payments/payment.service';
 import { MongoDeliveryTaskRepository } from './modules/delivery/delivery.model';
@@ -81,7 +81,7 @@ async function main(): Promise<void> {
   });
   const handoverService = new HandoverService({ handovers: new MongoHandoverRepository(), audit });
   const processingService = new ProcessingService({ assignments, handovers: handoverService });
-  const evidenceStorage = new StubEvidenceStorage();
+  const evidenceStorage = createEvidenceStorage(env);
   const paymentService = new PaymentService({
     payments: new MongoPaymentRepository(),
     audit,

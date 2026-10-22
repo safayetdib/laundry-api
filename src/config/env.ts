@@ -9,6 +9,14 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(LOG_LEVELS).optional(),
   SESSION_TTL_HOURS: z.coerce.number().int().positive().default(168),
   COOKIE_SECURE: z.enum(['true', 'false']).optional(),
+  // Optional S3-compatible object storage for evidence photos. When unset,
+  // a stub is used and uploads are disabled.
+  S3_BUCKET: z.string().min(1).optional(),
+  S3_REGION: z.string().min(1).optional(),
+  S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+  S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+  S3_ENDPOINT: z.string().min(1).optional(),
+  EVIDENCE_URL_TTL_SECONDS: z.coerce.number().int().positive().optional(),
 });
 
 type RawEnv = z.infer<typeof envSchema>;

@@ -45,9 +45,12 @@ performed and verified there.
 | `COOKIE_SECURE` | Force Secure cookies (defaults true in production) |
 | `LOG_LEVEL` | Optional; sensible default per environment |
 
-Object storage and payment-provider credentials are **not yet wired** (evidence
-uses a stub; mobile payments are verified manually). Add them, with env
-validation, before relying on uploads or automated payment confirmation.
+Evidence photo storage is S3-compatible and activates when `S3_BUCKET`,
+`S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` are set (optionally `S3_ENDPOINT`
+for MinIO/Spaces); when unset a stub is used and uploads are disabled. Presigned
+upload/download URLs are issued by the API. Payment-provider credentials are
+**not yet wired** — mobile payments are verified manually — so add automated
+payment confirmation before relying on it.
 
 ### Web ↔ API
 
