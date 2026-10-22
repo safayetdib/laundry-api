@@ -15,6 +15,8 @@ import { zoneRoutes } from './modules/zones/zone.routes';
 import type { ZoneRepository } from './modules/zones/zone.repository';
 import { pricingRoutes } from './modules/pricing/pricing.routes';
 import type { PricingService } from './modules/pricing/pricing.service';
+import { orderRoutes } from './modules/orders/order.routes';
+import type { OrderService } from './modules/orders/order.service';
 import type { Logger } from './lib/logger';
 
 export interface AppOptions {
@@ -24,6 +26,7 @@ export interface AppOptions {
   services: ServiceRepository;
   zones: ZoneRepository;
   pricingService: PricingService;
+  orderService: OrderService;
   cookieSecure: boolean;
   sessionTtlMs: number;
 }
@@ -42,6 +45,7 @@ export function createApp({
   services,
   zones,
   pricingService,
+  orderService,
   cookieSecure,
   sessionTtlMs,
 }: AppOptions): Express {
@@ -66,6 +70,7 @@ export function createApp({
   apiV1.use(serviceRoutes(services));
   apiV1.use(zoneRoutes(zones));
   apiV1.use(pricingRoutes({ pricingService, services, authService }));
+  apiV1.use(orderRoutes({ orderService, authService }));
   app.use('/api/v1', apiV1);
 
   app.use(notFoundHandler);

@@ -10,6 +10,11 @@ import { MongoZoneRepository } from './modules/zones/zone.model';
 import { MongoPriceListRepository } from './modules/pricing/pricelist.model';
 import { MongoAuditRepository } from './modules/audit/audit.model';
 import { PricingService } from './modules/pricing/pricing.service';
+import { MongoOrderRepository } from './modules/orders/order.model';
+import { MongoSlotRepository } from './modules/scheduling/slot.model';
+import { SlotService } from './modules/scheduling/slot.service';
+import { MongoIdempotencyRepository } from './modules/idempotency/idempotency.model';
+import { OrderService } from './modules/orders/order.service';
 
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
@@ -32,10 +37,21 @@ async function main(): Promise<void> {
     sessions: new MongoSessionRepository(),
     sessionTtlMs,
   });
+  const audit = new MongoAuditRepository();
+  const zones = new MongoZoneRepository();
   const pricingService = new PricingService({
     priceLists: new MongoPriceListRepository(),
     services,
-    audit: new MongoAuditRepository(),
+    audit,
+  });
+  const orderService = new OrderService({
+    orders: new MongoOrderRepository(),
+    zones,
+    services,
+    pricing: pricingService,
+    slots: new SlotService(new MongoSlotRepository()),
+    idempotency: new MongoIdempotencyRepository(),
+    audit,
   });
 
   const app = createApp({
@@ -43,8 +59,9 @@ async function main(): Promise<void> {
     checkReadiness: dbReadiness,
     authService,
     services,
-    zones: new MongoZoneRepository(),
+    zones,
     pricingService,
+    orderService,
     cookieSecure: env.COOKIE_SECURE_RESOLVED,
     sessionTtlMs,
   });

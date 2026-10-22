@@ -8,6 +8,11 @@ import { InMemoryZoneRepository } from '../modules/zones/zone.repository';
 import { InMemoryPriceListRepository } from '../modules/pricing/pricelist.repository';
 import { InMemoryAuditRepository } from '../modules/audit/audit.repository';
 import { PricingService } from '../modules/pricing/pricing.service';
+import { InMemoryOrderRepository } from '../modules/orders/order.repository';
+import { InMemorySlotRepository } from '../modules/scheduling/slot.repository';
+import { SlotService } from '../modules/scheduling/slot.service';
+import { InMemoryIdempotencyRepository } from '../modules/idempotency/idempotency.repository';
+import { OrderService } from '../modules/orders/order.service';
 
 export interface TestAppOptions {
   checkReadiness?: () => boolean;
@@ -27,9 +32,23 @@ export function buildTestApp(options: TestAppOptions = {}) {
   const priceLists = new InMemoryPriceListRepository();
   const audit = new InMemoryAuditRepository();
 
+  const orders = new InMemoryOrderRepository();
+  const slotRepo = new InMemorySlotRepository();
+  const idempotency = new InMemoryIdempotencyRepository();
+
   const sessionTtlMs = options.sessionTtlMs ?? 60 * 60 * 1000;
   const authService = new AuthService({ users, sessions, sessionTtlMs });
   const pricingService = new PricingService({ priceLists, services, audit });
+  const slotService = new SlotService(slotRepo);
+  const orderService = new OrderService({
+    orders,
+    zones,
+    services,
+    pricing: pricingService,
+    slots: slotService,
+    idempotency,
+    audit,
+  });
 
   const app = createApp({
     logger: createLogger('silent'),
@@ -38,9 +57,24 @@ export function buildTestApp(options: TestAppOptions = {}) {
     services,
     zones,
     pricingService,
+    orderService,
     cookieSecure: false,
     sessionTtlMs,
   });
 
-  return { app, authService, pricingService, users, sessions, services, zones, priceLists, audit };
+  return {
+    app,
+    authService,
+    pricingService,
+    orderService,
+    slotService,
+    users,
+    sessions,
+    services,
+    zones,
+    priceLists,
+    orders,
+    slotRepo,
+    audit,
+  };
 }
