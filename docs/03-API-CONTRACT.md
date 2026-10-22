@@ -68,10 +68,13 @@ Do not expose stack traces, internal query details or secrets.
 -   `POST /admin/price-lists`
 -   `POST /admin/price-lists/:id/publish`
 
-### Zones
+### Zones and scheduling
 
 -   `GET /zones`
--   `GET /zones/availability?zoneId=...&date=...`
+-   `GET /zones/availability?zoneId=...&date=...` — returns selectable
+    pickup/delivery windows with remaining capacity. Availability is
+    advisory; capacity is reserved atomically at booking time, not by this
+    read.
 
 ### Orders
 
@@ -94,14 +97,41 @@ Do not expose stack traces, internal query details or secrets.
 -   `GET /partner/assignments`
 -   `POST /partner/assignments/:id/accept`
 -   `POST /partner/assignments/:id/status`
+-   `POST /partner/assignments/:id/intake` — records partner-received
+    counts and discrepancies without overwriting the pickup count.
 
 Partner scope is derived from the authenticated user/session. Do not
 trust a client-supplied `partnerId`.
 
+### Routing and rider (operations-managed)
+
+-   `GET /admin/route-manifests` / `POST /admin/route-manifests`
+-   `POST /admin/route-manifests/:id/stops` — set/reorder ordered stops
+    while the manifest is draft.
+-   `POST /admin/route-manifests/:id/assign` — assign a rider and publish.
+-   `GET /rider/manifests` — the authenticated rider's assigned manifests
+    and ordered stops.
+-   `POST /rider/stops/:id/complete` — complete a pickup/delivery stop. The
+    rider selects the order and service **manually**; a scan is never
+    required. Records actor, timestamp, count, condition notes and failure
+    reason where applicable.
+
+### Handovers and optional scan resolution
+
+-   `POST /orders/:id/handovers` — record a pickup/intake/collection/
+    delivery handover with manual service and count confirmation. A
+    `scanAssisted` flag may be set, but a scan alone is never proof.
+-   `GET /orders/:id/handovers` — append-only handover history.
+-   `POST /scan/resolve` *(optional, only if scanning is enabled)* —
+    interprets a code and returns an allowed action or record (e.g.
+    preselect a service). It performs no state change on its own and never
+    bypasses authentication, authorization, order/assignment validation,
+    count confirmation or handover confirmation. Unknown, invalid, disabled
+    or unsupported codes return a safe error and the client falls back to
+    manual entry.
+
 ### Later modules
 
--   `POST /custody/scan`
--   `GET /orders/:id/custody`
 -   `GET /rider/tasks`
 -   `POST /delivery-tasks/:id/complete`
 -   `POST /orders/:id/payment-records`
@@ -109,13 +139,15 @@ trust a client-supplied `partnerId`.
 -   `POST /quality-cases`
 
 Do not implement all endpoints in the first milestone. Follow the
-roadmap.
+roadmap. Endpoints for individual bag tracking are intentionally omitted
+and added only if pilot evidence justifies them.
 
 ## Idempotency
 
 Use an idempotency key for actions that must not happen twice, including
-order creation, payment confirmation, refund requests and custody
-transitions. Scope keys to the authenticated actor and operation. Store
+order creation, slot reservation, payment confirmation, refund requests
+and handover transitions. Scope keys to the authenticated actor and
+operation. Store
 the outcome long enough to prevent accidental duplicate requests.
 Reusing a key with a materially different request must return a
 conflict.

@@ -12,32 +12,39 @@ helpers.
 ### API integration tests
 
 Use a dedicated test database or a reliable isolated database setup: -
-Authentication/session behavior. - Order create/read/update. - Partner
-and rider access boundaries. - Duplicate/idempotent requests. - Invalid
-status transitions. - Quote approval and stale-version conflicts. -
-Payment verification rules. - Custody event validation.
+Authentication/session behavior. - Order create/read/update. - Concurrent
+booking at the last available slot (atomic capacity, no oversell). -
+Partner and rider access boundaries. - Duplicate/idempotent requests. -
+Invalid status transitions. - Route manifest stop transitions and failure
+reasons. - Quote approval and stale-version conflicts. - Payment
+verification rules. - Handover event validation (manual, and scan-assisted
+if scanning is enabled). - Preservation of both pickup and partner-received
+counts.
 
 ### End-to-end tests
 
-Prioritize critical user journeys: 1. Customer books an order. 2. Admin
-confirms and assigns it. 3. Rider records pickup. 4. Partner receives
-and processes it. 5. Folded dispatches return delivery. 6. Rider
-delivers and records COD or delivery evidence. 7. Admin sees final
+Prioritize critical user journeys: 1. Customer books an order into a
+scheduled window. 2. Admin confirms, assigns it and arranges a route
+manifest. 3. Rider completes the pickup stop with manual service selection.
+4. Partner receives and processes it. 5. Folded dispatches return delivery.
+6. Rider delivers and records COD or delivery evidence. 7. Admin sees final
 order/payment status.
 
-Also test: - Count discrepancy and revised quote approval. - Partner
-delay. - Failed delivery. - Missing/damaged item case. - Unauthorized
-partner/rider access. - Duplicate submit/scan. - Database backup
-restoration procedure.
+Also test: - The full journey without any scanning. - Count discrepancy and
+revised quote approval. - Partner delay. - Failed delivery stop with a
+recorded reason. - Missing/damaged item case. - Unauthorized partner/rider
+access. - Duplicate submit (and scan, if scanning is enabled). - Database
+backup restoration procedure.
 
 ## Operational monitoring
 
 At minimum monitor: - API 5xx rate and latency. - Failed login/OTP
 spikes. - Database connection failures. - Failed scheduled jobs. -
-Repeated idempotency conflicts. - Orders stuck in a state beyond its
-expected duration. - Payment records awaiting verification. - COD
-reconciliation discrepancies. - Upload failures. - Partner and rider
-workflow exceptions.
+Repeated idempotency conflicts. - Slot-reservation conflicts and
+oversell attempts. - Route-manifest stops overdue or failing. - Orders
+stuck in a state beyond its expected duration. - Payment records awaiting
+verification. - COD reconciliation discrepancies. - Upload failures. -
+Partner and rider workflow exceptions.
 
 Log a request ID on every request. Redact sensitive information.
 

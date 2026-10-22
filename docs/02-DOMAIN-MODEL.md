@@ -4,14 +4,19 @@
 
 Initial collections: - `users` - `sessions` (if using server-side
 sessions) - `addresses` - `serviceZones` - `services` - `priceLists` -
-`orders` - `partners` - `partnerOrderAssignments` - `bags` -
-`handoverEvents` - `deliveryTasks` - `payments` - `qualityCases` -
-`auditLogs`
+`slotReservations` - `orders` - `partners` - `partnerOrderAssignments` -
+`processingRecords` - `handoverEvents` - `routeManifests` (with embedded or
+referenced stops) - `deliveryTasks` - `payments` - `qualityCases` -
+`idempotencyRecords` - `auditLogs`
 
-Optional later: - `subscriptions` - `notificationOutbox` -
-`webhookEvents` - `settlements` - `inventory` - `routePlans`
+Optional later: - `bags` (only when individual bag tracking is justified) -
+`subscriptions` - `notificationOutbox` - `webhookEvents` - `settlements` -
+`inventory`
 
-Do not create every optional collection before a use case exists.
+`bags` is deliberately not an initial collection. The core domain is
+orders, order service items, operational tasks, handover events and
+processing records; bag identity is optional metadata enabled later. Do not
+create every optional collection before a use case exists.
 
 ## User and partner scope
 
@@ -56,8 +61,16 @@ contact information, timestamps.
 ### ServiceZone
 
 `_id`, unique `code`, `name`, city, active/inactive status,
-locality/postal-code or geospatial coverage, slot configuration,
-timestamps.
+locality/postal-code or geospatial coverage, slot configuration (window
+durations, cutoffs, default capacity), timestamps.
+
+### SlotReservation
+
+`_id`, `zoneId`, slot type (`pickup`, `delivery`), start/end window,
+capacity, reserved count, status, optional `orderId`, reservation expiry
+for unconfirmed bookings, created/updated timestamps. Capacity is reserved
+atomically; a frontend availability check is not sufficient. Capacity is
+released on valid cancellation or expiry.
 
 ### PriceList
 
@@ -83,24 +96,52 @@ ID/version, optional condition notes.
 payable amount, currency, partner price-list ID/version, timestamps for
 acceptance/receipt/completion.
 
-### Bag
+### ProcessingRecord
 
-`_id`, random unique QR token/identifier, `orderId`, seal status,
-current custody reference, created timestamp. QR values must not reveal
-customer data and must not authorize access.
+`_id`, `assignmentId`, `orderId`, received quantities per order service
+item, processing status, discrepancy references, completion/ready
+timestamps. The partner-received count is preserved alongside the original
+pickup count; neither silently overwrites the other.
+
+### RouteManifest
+
+`_id`, date, window reference, `riderId`, vehicle/bag capacity inputs,
+status, ordered list of stops and timestamps. For the pilot an operator
+arranges stop order manually. Hybrid manifests may mix pickup and delivery
+stops.
+
+### RouteStop
+
+Belongs to a manifest (embedded or referenced): `_id`, sequence index, stop
+type (`pickup`, `delivery`, `partner_dropoff`, `partner_collection`),
+`orderId`/`deliveryTaskId`, address snapshot, status, failure reason,
+arrival/completion timestamps. Keep stops as first-class, data-driven
+records so automated routing can set stop order later without a redesign.
+
+### Bag (optional, only when individual bag tracking is enabled)
+
+Not a pilot entity. When justified: `_id`, random opaque identifier,
+`orderId`, optional registration/seal status, created timestamp. A bag
+identifier carries no customer data, business rules or authorization, and a
+service sticker does not identify a bag unless explicitly registered for
+that purpose.
 
 ### HandoverEvent
 
-`_id`, bag/order IDs, event type, from/to parties, actor user, time
-occurred, time recorded, optional item count, discrepancy and evidence
-keys, request ID. Append events; do not edit past events to correct
+`_id`, `orderId`, optional `deliveryTaskId`/`assignmentId`, optional
+`bagId` (only if bag tracking is enabled), event type (`pickup`, `intake`,
+`collection`, `delivery`, correction/exception), from/to parties, actor
+user, time occurred, time recorded, optional item count, discrepancy and
+evidence keys, scan-assisted flag, request ID. The event is anchored to the
+order/task, not to a bag. Append events; do not edit past events to correct
 mistakes.
 
 ### DeliveryTask
 
 `_id`, order ID, task type (`pickup`, `return_delivery`), assigned
-rider, status, scheduled window, attempts, proof/evidence references,
-COD amount collected, timestamps.
+rider, optional `manifestId`/stop reference, status, scheduled window,
+attempts, failure reason, proof/evidence references, COD amount collected,
+timestamps.
 
 ### Payment
 
@@ -111,7 +152,8 @@ overwrites.
 
 ### QualityCase
 
-`_id`, order ID, relevant item/bag/assignment references, type
+`_id`, order ID, relevant item/assignment references (and bag only if bag
+tracking is enabled), type
 (`missing`, `damage`, `rework`, `complaint`, `other`), status, evidence,
 investigation notes, resolution and timestamps.
 
@@ -123,14 +165,18 @@ and timestamp. Do not log credentials or sensitive tokens.
 ## Relationships
 
 -   User → many Orders.
--   Order → many Order items.
+-   Order → many Order service items.
 -   Order → many PartnerOrderAssignments.
 -   Partner → many PartnerOrderAssignments.
--   Order → many Bags.
--   Bag → many HandoverEvents.
+-   PartnerOrderAssignment → one ProcessingRecord.
+-   Order → many HandoverEvents.
+-   RouteManifest → many RouteStops.
+-   RouteStop → one DeliveryTask (pickup or delivery).
 -   Order → many DeliveryTasks.
 -   Order → many Payment records.
 -   Order → many QualityCases.
+-   (Optional) Order → many Bags; Bag → many HandoverEvents — only when bag
+    tracking is enabled.
 -   User → many AuditLogs.
 
 ## State models
@@ -160,6 +206,21 @@ status. Support unpaid, pending verification, partial payment, paid,
 pending refund, partial refund and refunded states as derived/validated
 outcomes.
 
+### Delivery task and route stop
+
+Delivery task: `scheduled` → `en_route` → `arrived` →
+`completed`; or `failed` (with a recorded failure reason) →
+`rescheduled`. Route stop status mirrors its task and records sequence,
+arrival and failure reason. A manifest is `draft` → `assigned` →
+`in_progress` → `completed`, and an operator may reorder stops while the
+manifest is `draft`.
+
+### Slot reservation
+
+`held` (awaiting booking confirmation, with expiry) → `confirmed`; or
+`expired`/`released` on timeout or valid cancellation, which returns
+capacity.
+
 ## Invariants
 
 1.  An order's total equals the sum of validated line amounts and
@@ -171,12 +232,21 @@ outcomes.
     partner scope.
 5.  A rider can only act on tasks assigned to them or explicitly
     authorized by operations.
-6.  Custody transitions must match the expected bag/order state and
-    actor permission.
-7.  Completed financial records and custody events are not silently
+6.  Handover transitions must match the expected order/task state and
+    actor permission, whether recorded manually or with a scan assist; a
+    scan alone is never sufficient.
+7.  Completed financial records and handover events are not silently
     overwritten.
 8.  Historical order price snapshots are stable after confirmation
     except through an explicit quote revision.
 9.  Every privileged override has an audit record.
 10. Duplicate requests must not create duplicate orders, collections or
     state transitions.
+11. Pickup-slot capacity is reserved atomically; confirmed reservations for
+    a slot never exceed its capacity.
+12. The original pickup count and the partner-received count are both
+    preserved on their respective records; a discrepancy is recorded rather
+    than one value overwriting the other.
+13. Every core workflow step can be completed with manual service selection
+    and manual confirmation; bag identity is never required to record a
+    handover.

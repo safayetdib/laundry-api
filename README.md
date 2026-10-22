@@ -5,15 +5,13 @@ initial software platform.
 
 ## How to use it
 
-1.  Create the separate repositories `folded-api`, `folded-web`, and
-    optionally `folded-docs`.
+1.  Use the separate repositories `laundry-api` (the API) and
+    `laundry-web` (the web app); a separate docs repository is optional.
 2.  Start with the API repository.
 3.  Copy `CLAUDE.md` into the root of each code repository. Keep the
     repository-specific addendum relevant to that repo.
-4.  Give Claude Code `docs/00-PROJECT-BRIEF.md`,
-    `docs/01-ARCHITECTURE.md`, `docs/02-DOMAIN-MODEL.md`,
-    `docs/03-API-CONTRACT.md`, `docs/04-SECURITY.md`, and
-    `docs/05-ROADMAP.md` as project context.
+4.  Give Claude Code `CLAUDE.md` and all files under `docs/`
+    (`00`–`08`) as project context.
 5.  Ask Claude Code to implement one milestone at a time. Require it to
     inspect the current repository before editing and to run tests/type
     checks after changes.
@@ -47,6 +45,8 @@ initial software platform.
     and backups
 -   `docs/07-DECISIONS-AND-OPEN-QUESTIONS.md` --- decisions already made
     and items that need explicit confirmation
+-   `docs/08-LOOPHOLE-REVIEW.md` --- design-review risk register (P0/P1/P2
+    safeguards) to check before implementing each milestone
 
 ## Important
 
@@ -55,4 +55,3 @@ operational contract. Payment gateway integrations, Bangladesh-specific
 legal terms, tax treatment, privacy retention and partner claim policies
 must be confirmed before production use. Do not claim a feature is
 implemented merely because its documentation exists.
-# laundry-api

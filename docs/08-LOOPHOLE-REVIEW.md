@@ -102,25 +102,30 @@ and validate all amounts on the server using integer minor units and
 documented rounding rules. - Reject stale approvals and concurrent
 conflicting edits.
 
-### 6. QR identifiers and custody handovers need replay protection
+### 6. Handover integrity (manual and scan-assisted) needs replay protection
 
-**Gap:** Random QR IDs and append-only events are good, but a scan
-endpoint could still accept replayed or out-of-order handovers or
-falsely record a two-party transfer.
+**Gap:** Handovers are the custody backbone whether or not scanning is
+used. A handover endpoint could accept replayed or out-of-order handovers
+or falsely record a two-party transfer, and a scan assist (if enabled)
+adds a replay surface.
 
-**Requirement:** - QR code contains only a random opaque bag identifier,
-not customer details, order totals or bearer authorization. - Require
-authenticated actor, authorized assignment/task, expected current
-holder/state, expected event type and idempotency key. - Define who is
-permitted to initiate and confirm each handover. Where practical, record
+**Requirement:** - Handovers are anchored to the order/task and must work
+with manual confirmation; scanning is optional and a scan alone is never
+proof. - Require authenticated actor, authorized assignment/task, expected
+current holder/state, expected event type and idempotency key. - Define who
+is permitted to initiate and confirm each handover. Where practical, record
 both handing-over and receiving party confirmation; if operationally
 impractical, record the limitation and compensating checks. - Use
 compare-and-set/optimistic concurrency so only one valid transition
 wins. - Record event actor, from/to parties, event time, server-recorded
-time, count, discrepancy, evidence references and request ID. - Do not
-allow deleting/editing historical events. Corrections must be separate
-events. - Test duplicate QR scans, wrong order/bag, wrong partner,
-out-of-order scan, stale state and replay.
+time, count, discrepancy, evidence references, scan-assisted flag and
+request ID. - Do not allow deleting/editing historical events. Corrections
+must be separate events. - **If scanning is enabled:** the code is a random
+opaque identifier only (no customer details, totals or bearer
+authorization), resolved through the replaceable scan-resolution component,
+and unknown/invalid/disabled codes fail safely to manual entry. - Test
+duplicate submissions and (if scanning) duplicate scans, wrong order,
+wrong partner, out-of-order and stale-state handovers, and replay.
 
 ### 7. Authorization must cover object-level and field-level access
 
@@ -185,16 +190,18 @@ failures.
 ### 11. Garment counts and item identity need an explicit pilot rule
 
 **Gap:** An order line with quantity 10 is not the same as ten
-individually identified garments. Bag-level QR custody cannot prove
-which exact garment is missing.
+individually identified garments. Aggregate counts cannot prove which
+exact garment is missing, and the pilot has no bag collection.
 
-**Requirement:** - For the pilot, explicitly choose bag-level tracking
-with count/service/condition evidence, or per-garment identifiers for
-selected high-risk garments. - Record counts at pickup, partner receipt,
-partner dispatch and return handover where operationally feasible. -
-Define discrepancy ownership, photo requirements, customer approval and
-exception handling. - Do not claim item-level traceability if only bags
-and aggregate counts are tracked.
+**Requirement:** - For the pilot, track counts and condition evidence per
+order service item; do not depend on bags. Add per-garment or registered
+bag identifiers only for selected high-risk cases, and only if justified. -
+Record counts at pickup, partner receipt, partner dispatch and return
+handover where operationally feasible, preserving both the pickup count and
+the partner-received count. - Define discrepancy ownership, which
+discrepancies block processing, photo requirements, customer approval and
+exception handling. - Do not claim item-level traceability if only
+aggregate per-service counts are tracked.
 
 ### 12. Uploads and photos can leak private data
 

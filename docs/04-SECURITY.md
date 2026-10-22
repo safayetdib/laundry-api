@@ -53,13 +53,13 @@
 -   Do not describe a payment as verified unless the verification action
     succeeded.
 
-## Custody and evidence
+## Handover, custody and evidence
 
--   QR tokens are random, non-sequential and contain no personal
-    information.
--   A QR code is an identifier, not an authorization token.
--   Validate the actor, bag, order and expected state before recording a
-    handover.
+-   These rules apply to every handover, whether recorded manually or with
+    an optional scan assist. Scanning is never required and a scan alone is
+    never proof of a handover.
+-   Validate the actor, order/task and expected state before recording a
+    handover. Validate bag identity only when bag tracking is enabled.
 -   Record event actor, parties, timestamp, count/discrepancy and
     evidence references where applicable.
 -   Do not edit old handover events; append corrections or exception
@@ -67,6 +67,19 @@
 -   Store evidence photos privately with short-lived signed access URLs.
 -   Apply upload type/size limits and validate file content where
     feasible.
+
+### If scanning is enabled
+
+-   QR/sticker codes are random, non-sequential and contain no personal
+    information, business rules or authorization; a code is an identifier
+    only, never a bearer or authorization token.
+-   A service sticker may preselect a service; it does not identify an
+    individual bag unless explicitly registered for that purpose.
+-   Resolve codes through the replaceable scan-resolution component; unknown,
+    invalid, disabled or unsupported codes fail safely and fall back to
+    manual entry.
+-   Protect against scan replay and out-of-order scans with expected-state
+    checks and idempotency keys.
 
 ## Infrastructure
 

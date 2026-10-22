@@ -2,45 +2,28 @@
 
 ## Decisions already made
 
-  -----------------------------------------------------------------------
-  Topic                               Decision
-  ----------------------------------- -----------------------------------
-  Business model                      Managed Folded service, not
-                                      marketplace at launch
-
-  Launch city                         Chattogram
-
-  Pilot partner count                 One laundry first
-
-  Repository strategy                 Separate repositories
-
-  Customer experience                 Responsive web first
-
-  Backend                             Separate Express API
-
-  Authentication                      Shared backend
-                                      identity/authentication
-
-  Database                            MongoDB/Mongoose
-
-  Customer pricing                    Per-item initially
-
-  Payment methods                     COD, bKash, Nagad
-
-  Mobile payment verification         Manual at first is acceptable
-
-  Custody                             QR-identified bags and append-only
-                                      handover history
-
-  Partner expansion                   Data model supports multiple
-                                      assignments/partners
-
-  Currency                            BDT with integer minor units
-
-  API                                 Versioned REST API, OpenAPI
-
-  Infrastructure                      Managed services, modular monolith
-  -----------------------------------------------------------------------
+| Topic | Decision |
+| --- | --- |
+| Business model | Managed Folded service, not marketplace at launch |
+| Launch city | Chattogram |
+| Pilot partner count | One laundry first |
+| Repository strategy | Separate repositories (`laundry-api`, `laundry-web`) |
+| Customer experience | Responsive web first |
+| Backend | Separate Express API |
+| Authentication | Shared backend identity/authentication |
+| Database | MongoDB/Mongoose |
+| Customer pricing | Per-item initially |
+| Payment methods | COD, bKash, Nagad |
+| Mobile payment verification | Manual at first is acceptable |
+| Scanning | Optional; every core workflow works without it. Codes may preselect a service and never carry authorization |
+| Bag identity | Optional metadata only; no bag collection or registration in the pilot |
+| Custody | Manual-first handovers with append-only handover/processing history |
+| Scheduling | Configurable pickup/delivery windows with capacity limits and booking cutoffs |
+| Routing | Operations-managed manual route manifest for the pilot; no auto-routing or live GPS |
+| Partner expansion | Data model supports multiple assignments/partners |
+| Currency | BDT with integer minor units |
+| API | Versioned REST API, OpenAPI |
+| Infrastructure | Managed services, modular monolith |
 
 ## Decisions that must be confirmed before production
 
@@ -64,6 +47,15 @@
 14. Production hosting and backup plan.
 15. Whether customer order tracking uses login, OTP or secure expiring
     links.
+16. Exact pickup/delivery window durations, booking cutoffs and per-zone
+    capacity limits.
+17. Which intake discrepancies block processing, which require customer
+    approval, and which need only operational review.
+18. Whether any scan assist (service stickers, bag codes) is enabled for the
+    pilot, and which bag approach is used — noting core workflows must work
+    without it either way.
+19. Rider assignment rules and vehicle/bag capacity inputs for the route
+    manifest.
 
 ## Do not guess
 
