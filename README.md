@@ -61,6 +61,17 @@ cp .env.example .env    # local configuration (never commit .env)
 pnpm dev                # start the dev server with reload (default PORT=3000)
 ```
 
+### Seeding
+
+`pnpm seed` bootstraps a usable system against the configured `MONGODB_URI`:
+the first admin (and optional operations/partner-staff/rider users), the
+service catalogue, a pilot zone with slots, the pilot partner, and published
+customer/partner price lists. It is idempotent (safe to re-run). Admin
+credentials come from `SEED_ADMIN_PHONE`/`SEED_ADMIN_PASSWORD` (required).
+
+> The seed publishes **placeholder** prices/rates so flows work out of the
+> box; replace them with the real rate cards before launch.
+
 Checks (all run in CI on every push/PR):
 
 ```bash

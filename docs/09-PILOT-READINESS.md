@@ -134,7 +134,9 @@ storage and payment layers.
 - [ ] Monitoring and alerts wired; logs redacting secrets **(live infra)**
 - [ ] CORS/cookie domain finalized for the chosen hostnames **(live infra)**
 - [ ] Auth decisions in `docs/07` confirmed (login method, tracking links)
-- [ ] Catalogue, customer prices and partner rate card published
+- [ ] Bootstrap run (`pnpm seed`) to create the first admin and base data
+- [ ] Catalogue, customer prices and partner rate card published (replace the
+      seed's placeholder prices with the real rate cards)
 - [ ] Pilot zones, slot capacities and cutoffs configured
 - [ ] Object storage configured if evidence uploads are used **(live infra)**
 - [ ] Payment proof/verification process agreed with operations
