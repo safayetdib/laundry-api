@@ -9,6 +9,7 @@ import { healthRoutes, type ReadinessCheck } from './modules/health/health.route
 import { openapiRoutes } from './openapi/openapi.routes';
 import { authRoutes } from './modules/auth/auth.routes';
 import type { AuthService } from './modules/auth/auth.service';
+import type { OtpService } from './modules/auth/otp.service';
 import { serviceRoutes } from './modules/catalogue/service.routes';
 import type { ServiceRepository } from './modules/catalogue/service.repository';
 import { zoneRoutes } from './modules/zones/zone.routes';
@@ -40,6 +41,7 @@ export interface AppOptions {
   logger: Logger;
   checkReadiness: ReadinessCheck;
   authService: AuthService;
+  otpService: OtpService;
   services: ServiceRepository;
   zones: ZoneRepository;
   pricingService: PricingService;
@@ -68,6 +70,7 @@ export function createApp({
   logger,
   checkReadiness,
   authService,
+  otpService,
   services,
   zones,
   pricingService,
@@ -101,7 +104,7 @@ export function createApp({
   // Versioned API surface.
   const apiV1 = Router();
   apiV1.use(openapiRoutes());
-  apiV1.use('/auth', authRoutes({ authService, cookieSecure, sessionTtlMs }));
+  apiV1.use('/auth', authRoutes({ authService, otpService, cookieSecure, sessionTtlMs }));
   apiV1.use(serviceRoutes(services));
   apiV1.use(zoneRoutes(zones));
   apiV1.use(pricingRoutes({ pricingService, services, authService }));

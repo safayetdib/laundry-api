@@ -5,6 +5,9 @@ import { connectDb, disconnectDb, dbReadiness } from './lib/db';
 import { MongoUserRepository } from './modules/users/user.model';
 import { MongoSessionRepository } from './modules/auth/session.model';
 import { AuthService } from './modules/auth/auth.service';
+import { OtpService } from './modules/auth/otp.service';
+import { MongoOtpRepository } from './modules/auth/otp.model';
+import { StubSmsSender } from './modules/auth/sms';
 import { MongoServiceRepository } from './modules/catalogue/service.model';
 import { MongoZoneRepository } from './modules/zones/zone.model';
 import { MongoPriceListRepository } from './modules/pricing/pricelist.model';
@@ -47,10 +50,17 @@ async function main(): Promise<void> {
 
   const sessionTtlMs = env.SESSION_TTL_HOURS * 60 * 60 * 1000;
   const services = new MongoServiceRepository();
+  const users = new MongoUserRepository();
   const authService = new AuthService({
-    users: new MongoUserRepository(),
+    users,
     sessions: new MongoSessionRepository(),
     sessionTtlMs,
+  });
+  const otpService = new OtpService({
+    users,
+    otps: new MongoOtpRepository(),
+    sms: new StubSmsSender(logger),
+    auth: authService,
   });
   const audit = new MongoAuditRepository();
   const zones = new MongoZoneRepository();
@@ -105,6 +115,7 @@ async function main(): Promise<void> {
     logger,
     checkReadiness: dbReadiness,
     authService,
+    otpService,
     services,
     zones,
     pricingService,

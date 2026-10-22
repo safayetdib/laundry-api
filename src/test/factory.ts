@@ -1,6 +1,9 @@
 import { createApp } from '../app';
 import { createLogger } from '../lib/logger';
 import { AuthService } from '../modules/auth/auth.service';
+import { OtpService } from '../modules/auth/otp.service';
+import { InMemoryOtpRepository } from '../modules/auth/otp.repository';
+import { StubSmsSender } from '../modules/auth/sms';
 import { InMemoryUserRepository } from '../modules/users/user.repository';
 import { InMemorySessionRepository } from '../modules/auth/session.repository';
 import { InMemoryServiceRepository } from '../modules/catalogue/service.repository';
@@ -55,6 +58,8 @@ export function buildTestApp(options: TestAppOptions = {}) {
 
   const sessionTtlMs = options.sessionTtlMs ?? 60 * 60 * 1000;
   const authService = new AuthService({ users, sessions, sessionTtlMs });
+  const otps = new InMemoryOtpRepository();
+  const otpService = new OtpService({ users, otps, sms: new StubSmsSender(), auth: authService });
   const pricingService = new PricingService({ priceLists, services, audit });
   const slotService = new SlotService(slotRepo);
   const orderService = new OrderService({
@@ -97,6 +102,7 @@ export function buildTestApp(options: TestAppOptions = {}) {
     logger: createLogger('silent'),
     checkReadiness: options.checkReadiness ?? (() => true),
     authService,
+    otpService,
     services,
     zones,
     pricingService,
@@ -117,6 +123,8 @@ export function buildTestApp(options: TestAppOptions = {}) {
   return {
     app,
     authService,
+    otpService,
+    otps,
     pricingService,
     orderService,
     slotService,

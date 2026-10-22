@@ -83,17 +83,23 @@ export class AuthService {
     const ok = await verifyPassword(password, user.passwordHash);
     if (!ok) throw invalid;
 
+    return this.startSessionForUser(user);
+  }
+
+  /**
+   * Issues a session for an already-authenticated user (used by password login
+   * and by OTP login after the code is verified). Rejects a suspended account.
+   */
+  async startSessionForUser(user: User): Promise<{ user: User; token: string }> {
     if (user.status !== 'active') {
       throw new ForbiddenError('This account is suspended.');
     }
-
     const token = this.generateToken();
     await this.deps.sessions.create({
       userId: user.id,
       tokenHash: hashSessionToken(token),
       expiresAt: new Date(this.now().getTime() + this.deps.sessionTtlMs),
     });
-
     return { user, token };
   }
 

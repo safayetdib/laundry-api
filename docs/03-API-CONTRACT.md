@@ -57,9 +57,14 @@ Do not expose stack traces, internal query details or secrets.
 
 ### Auth
 
--   `POST /auth/login`
+-   `POST /auth/login` (phone + password)
 -   `POST /auth/logout`
 -   `GET /auth/me`
+-   `POST /auth/request-otp` — optional phone-OTP login; issues a code via SMS
+    (a real provider is a pending integration; with the stub sender no code is
+    delivered). Rate-limited; response never reveals whether an account exists.
+-   `POST /auth/verify-otp` — verifies the code and starts a session, creating a
+    customer on first login.
 
 ### Services and pricing
 
