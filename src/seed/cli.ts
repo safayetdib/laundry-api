@@ -1,3 +1,5 @@
+// Load a local .env (if present) before reading config. See src/server.ts.
+import 'dotenv/config';
 import { loadEnv } from '../config/env';
 import { createLogger } from '../lib/logger';
 import { connectDb, disconnectDb } from '../lib/db';

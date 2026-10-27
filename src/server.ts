@@ -1,3 +1,7 @@
+// Load variables from a local .env file into process.env before anything reads
+// them. Does nothing when .env is absent and never overrides vars already set
+// in the real environment (e.g. production/CI), so it is safe in every context.
+import 'dotenv/config';
 import { createApp } from './app';
 import { loadEnv } from './config/env';
 import { createLogger } from './lib/logger';
